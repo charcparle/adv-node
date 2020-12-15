@@ -10,7 +10,9 @@
         "./server.js",
         "./auth.js",
         "./routes.js",
-        "./public/*"
+        "./public/*",
+        "./connection.js",
+        "./.env"
     ],
     "env": {
         "NODE_ENV": "development"
