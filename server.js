@@ -103,6 +103,15 @@ app.route('/login').post(
   }
 );
 
-app.get('/login', (res,req)=>{
-  res.render('./views/pug/profile.pug')
+const ensureAuthenticated = (req, res, next) => {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.redirect('/');
+};
+
+app.route('/profile').get(ensureAuthenticated, (req,res)=>{
+  res.render('./pug/profile.pug',{title: "profile!!"});
 });
+
+
