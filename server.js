@@ -111,7 +111,10 @@ const ensureAuthenticated = (req, res, next) => {
 };
 
 app.route('/profile').get(ensureAuthenticated, (req,res)=>{
-  res.render('./pug/profile.pug',{title: "profile!!"});
+  res.render('./pug/profile.pug',{
+    title: "profile!!",
+    username: req.user.username
+    });
 });
 
 
