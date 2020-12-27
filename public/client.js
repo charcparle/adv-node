@@ -4,7 +4,6 @@ $(document).ready(function () {
   let socket = io();
   socket.on('user count', function(data) {
     console.log(data);
-    
   });
 
   socket.on('user', data => {
@@ -14,11 +13,16 @@ $(document).ready(function () {
       (data.connected ? ' has joined the chat.' : ' has left the chat.');
     $('#messages').append($('<li>').html('<b>' + message + '</b>'));
   });
-  
+  socket.on('chat message', data=>{
+    let message = data.name + ": " + data.message;
+    $('#messages').append($('<li>').text(message));
+  });
+
   //console.log("something here inside client.js")
   $('form').submit(function () {
     var messageToSend = $('#m').val();
-
+    socket.emit('chat message', messageToSend);
+    console.log('msg sent')
     $('#m').val('');
     return false; // prevent form submit from refreshing page
   });

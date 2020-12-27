@@ -94,9 +94,17 @@ myDB(async (client) => {
         connected: false
       });
     });
-
+    socket.on('chat message', mTS=>{ //messageToSend
+      console.log('someone sent a msg');
+      io.emit('chat message', {
+        name: socket.request.user.name,
+        message: mTS
+      });
+    });
   });
+  
 
+  
 
   // Catching errors
 }).catch((e) => {
