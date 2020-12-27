@@ -15,17 +15,7 @@ const app = express();
 
 module.exports = function (app, myDataBase) {
   
-  // Generate hash for session
-  app.use(session({
-    secret: process.env.SESSION_SECRET,
-    resave: true,
-    saveUninitialized: true,
-    cookie: { secure: false }
-  }));
 
-  // Passport initialize
-  app.use(passport.initialize());
-  app.use(passport.session());
   
   app.route('/').get((req, res) => {
     res.render('pug', {
@@ -101,6 +91,7 @@ module.exports = function (app, myDataBase) {
   });
   app.route('/logout')
     .get((req, res) => {
+      req.session = null;
       req.logout();
       res.redirect('/');
   });
@@ -114,7 +105,8 @@ module.exports = function (app, myDataBase) {
     .get(
       passport.authenticate('github', { failureRedirect: '/' }), 
       (req,res) => {
-        //console.log(req.session);
+        console.log(req.session);
+        console.log(req.user);
         req.session.user_id = req.user.id
         res.redirect('/chat');
         //res.redirect('/profile');

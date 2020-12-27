@@ -23,6 +23,20 @@ const cookieParser = require('cookie-parser');
 
 fccTesting(app); //For FCC testing purposes
 
+// Generate hash for session
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: true,
+  saveUninitialized: true,
+  cookie: { secure: false },
+  key: 'express.sid',
+  store: store
+}));
+
+// Passport initialize
+app.use(passport.initialize());
+app.use(passport.session());
+
 // Request Logger
 app.use((req, res, next) => {
   console.log(req.method + " " + req.path + " - " + req.ip);
@@ -40,34 +54,49 @@ app.route('/').get((req, res) => {
 });
 */
 
-
+io.use(
+  passportSocketIo.authorize({
+    cookieParser: cookieParser,
+    key: 'express.sid',
+    secret: process.env.SESSION_SECRET,
+    store: store,
+    success: onAuthorizeSuccess,
+    fail: onAuthorizeFail
+  })
+);
 
 
 
 myDB(async (client) => {
   const myDataBase = await client.db('advnode').collection('users');
+  
   routes(app, myDataBase);
   auth(app, myDataBase);
-  io.use(
-    passportSocketIo.authorize({
-      cookieParser: cookieParser,
-      key: 'express.sid',
-      secret: process.env.SESSION_SECRET,
-      store: store,
-      success: onAuthorizeSuccess,
-      fail: onAuthorizeFail
-    })
-  );
-  ++currentUsers;
-  io.emit('user count', currentUsers);
+
+  let currentUsers = 0;
+  
+  //io.emit('user count', currentUsers);
   io.on('connection', socket => {
-    console.log('A user has connected');
+    ++currentUsers;
+    io.emit('user', {
+      name: socket.request.user.name,
+      currentUsers,
+      connected: true
+    });
+    //console.log('A user has connected');
     console.log('user ' + socket.request.user.name + ' connected');
     socket.on('disconnect', () => {
-      console.log('A user has disconnected');
+      console.log('user ' + socket.request.user.name + ' has disconnected');
       --currentUsers;
+      io.emit('user', {
+        name: socket.request.user.name,
+        currentUsers,
+        connected: false
+      });
     });
+
   });
+
 
   // Catching errors
 }).catch((e) => {
