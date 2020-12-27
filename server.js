@@ -12,6 +12,15 @@ const auth = require('./auth.js')
 
 const app = express();
 
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
+
+const MongoStore = require('connect-mongo')(session);
+const URI = process.env.MONGO_URI;
+const store = new MongoStore({ url: URI });
+const passportSocketIo = require('passport.socketio');
+const cookieParser = require('cookie-parser');
+
 fccTesting(app); //For FCC testing purposes
 
 // Request Logger
@@ -39,6 +48,26 @@ myDB(async (client) => {
   const myDataBase = await client.db('advnode').collection('users');
   routes(app, myDataBase);
   auth(app, myDataBase);
+  io.use(
+    passportSocketIo.authorize({
+      cookieParser: cookieParser,
+      key: 'express.sid',
+      secret: process.env.SESSION_SECRET,
+      store: store,
+      success: onAuthorizeSuccess,
+      fail: onAuthorizeFail
+    })
+  );
+  ++currentUsers;
+  io.emit('user count', currentUsers);
+  io.on('connection', socket => {
+    console.log('A user has connected');
+    console.log('user ' + socket.request.user.name + ' connected');
+    socket.on('disconnect', () => {
+      console.log('A user has disconnected');
+      --currentUsers;
+    });
+  });
 
   // Catching errors
 }).catch((e) => {
@@ -47,11 +76,22 @@ myDB(async (client) => {
   });
 });
 // app.listen out here...
-
+let currentUsers = 0;
 const port = process.env.PORT || 3000;
-app.listen(port, function () {
+http.listen(port, function () {
   console.log('Your app is listening on port ' + port)
 });
+
+function onAuthorizeSuccess(data, accept) {
+  console.log('successful connection to socket.io');
+  accept(null, true);
+}
+
+function onAuthorizeFail(data, message, error, accept) {
+  if (error) throw new Error(message);
+  console.log('failed connection to socket.io:', message);
+  accept(null, false);
+}
 
 
 
