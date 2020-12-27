@@ -8,6 +8,7 @@ const LocalStrategy = require('passport-local');
 const bcrypt = require('bcrypt');
 const routes = require('./routes.js')
 const auth = require('./auth.js')
+const GitHubStrategy = require('passport-github').Strategy;
 
 const app = express();
 
@@ -31,7 +32,8 @@ module.exports = function (app, myDataBase) {
       title: 'Database is ready!!',
       message: 'Please login',
       showLogin: true,
-      showRegistration: true
+      showRegistration: true,
+      showSocialAuth: true
     });
   });
 
@@ -102,5 +104,16 @@ module.exports = function (app, myDataBase) {
       req.logout();
       res.redirect('/');
   });
+
+  app.route('/auth/github')
+    .get(
+      passport.authenticate('github')
+    )
+
+  app.route('/auth/github/callback')
+    .get(
+      passport.authenticate('github', { failureRedirect: '/' }), (req,res) => {res.redirect('/profile');}
+    )
+
 
 }
